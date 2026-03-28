@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Design Compendium</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#111827;color:#e2e6f0;min-height:100vh;}
+
+  header{padding:18px 24px;display:flex;align-items:center;gap:12px;border-bottom:0.5px solid rgba(255,255,255,0.08);}
+  .logo{width:28px;height:28px;border-radius:6px;background:#534AB7;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .logo svg{width:14px;height:14px;}
+  header h1{font-size:16px;font-weight:500;color:#fff;}
+  .header-count{margin-left:auto;font-size:12px;color:#6b7491;background:rgba(255,255,255,0.06);border-radius:10px;padding:3px 10px;}
+
+  .filters{display:flex;gap:7px;flex-wrap:wrap;padding:14px 24px;border-bottom:0.5px solid rgba(255,255,255,0.06);}
+  .fb{font-size:12px;padding:4px 13px;border-radius:14px;border:0.5px solid rgba(255,255,255,0.12);background:transparent;color:#9aa0b8;cursor:pointer;transition:all 0.15s;font-family:inherit;}
+  .fb:hover{background:rgba(255,255,255,0.07);color:#d0d6e8;}
+  .fb.on{background:rgba(255,255,255,0.12);color:#fff;border-color:rgba(255,255,255,0.28);}
+
+  .board-wrap{overflow-x:auto;padding:16px 24px 32px;}
+  .board{display:flex;gap:11px;align-items:flex-start;min-width:max-content;}
+
+  .col{width:224px;background:rgba(255,255,255,0.05);border-radius:10px;padding:10px;}
+  .col-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;padding-bottom:8px;border-bottom:0.5px solid rgba(255,255,255,0.07);}
+  .col-title{font-size:12px;font-weight:500;color:#c4cad8;}
+  .col-count{font-size:11px;color:#6b7491;background:rgba(255,255,255,0.07);border-radius:10px;padding:1px 7px;}
+
+  .card{background:#1e2436;border-radius:8px;padding:10px 11px;margin-bottom:7px;border:0.5px solid rgba(255,255,255,0.06);transition:border-color 0.15s,background 0.15s;}
+  .card:hover{background:#252b3d;border-color:rgba(255,255,255,0.14);}
+  .card:last-child{margin-bottom:0;}
+
+  .tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;margin-bottom:7px;letter-spacing:0.02em;}
+  .tag-must{background:#3C3489;color:#CECBF6;}
+  .tag-fav{background:#633806;color:#FAC775;}
+  .tag-free{background:#27500A;color:#C0DD97;}
+  .tag-new{background:#085041;color:#9FE1CB;}
+  .tag-paid{background:#712B13;color:#F5C4B3;}
+
+  .card-title{font-size:12px;font-weight:500;color:#e2e6f0;line-height:1.45;margin-bottom:3px;}
+  .card-meta{font-size:11px;color:#5e6680;line-height:1.4;}
+  .card-link{display:inline-block;margin-top:8px;font-size:10px;color:#7aafdf;text-decoration:none;border:0.5px solid rgba(122,175,223,0.3);border-radius:4px;padding:2px 8px;transition:background 0.12s;}
+  .card-link:hover{background:rgba(122,175,223,0.08);}
+
+  .empty{padding:32px 0;text-align:center;color:#3d4460;font-size:13px;width:100%;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1.5" y="1.5" width="4" height="11" rx="1.5" fill="#CECBF6"/>
+      <rect x="8.5" y="1.5" width="4" height="7" rx="1.5" fill="#CECBF6"/>
+    </svg>
+  </div>
+  <h1>Game Design Compendium</h1>
+  <span class="header-count" id="total-count">43 recursos</span>
+</header>
+
+<div class="filters" id="filters">
+  <button class="fb on" data-tag="all">Todos</button>
+  <button class="fb" data-tag="MUST READ">Must read</button>
+  <button class="fb" data-tag="FAV">Favoritos</button>
+  <button class="fb" data-tag="FREE">Gratis</button>
+  <button class="fb" data-tag="NEW">Nuevos</button>
+</div>
+
+<div class="board-wrap">
+  <div class="board" id="board"></div>
+</div>
+
+<script>
+const DATA = [
+  {col:"Teoría — artículos", tag:"MUST READ", title:"The Door Problem", meta:"Liz England", url:"https://www.lizengland.com/blog/2014/04/the-door-problem/"},
+  {col:"Teoría — artículos", tag:"MUST READ", title:"I Have No Words & I Must Design", meta:"Greg Costikyan", url:"http://www.costik.com/nowords.html"},
+  {col:"Teoría — artículos", tag:"MUST READ", title:"MDA Framework", meta:"Hunicke / LeBlanc / Zubek", url:"https://users.cs.northwestern.edu/~hunicke/MDA.pdf"},
+  {col:"Teoría — artículos", tag:"FAV", title:"A Grammar of Gameplay", meta:"Raph Koster — GDC 2005", url:"http://www.raphkoster.com/gaming/atof/grammarofgameplay.pdf"},
+  {col:"Teoría — artículos", tag:"FREE", title:"The Chemistry of Game Design", meta:"David Perry — Gamasutra", url:"https://www.gamedeveloper.com/design/the-chemistry-of-game-design"},
+  {col:"Teoría — artículos", tag:"FREE", title:"Designing Games That Don't Suck", meta:"Ernest Adams", url:"https://www.gamedeveloper.com/"},
+  {col:"Teoría — artículos", tag:"NEW",  title:"Game Developer Deep Dives 2024", meta:"GameDeveloper.com", url:"https://www.gamedeveloper.com/design/game-developer-s-2024-wrap-up-10-must-read-deep-dives"},
+  {col:"Teoría — artículos", tag:"FAV",  title:"Good Numbers in Game Design", meta:"Alexander King — GDC 2023", url:"https://gdcvault.com/free"},
+
+  {col:"Videos & podcasts", tag:"MUST READ", title:"GMTK — Game Maker's Toolkit", meta:"Mark Brown — YouTube", url:"https://www.youtube.com/@GMTK"},
+  {col:"Videos & podcasts", tag:"MUST READ", title:"Juice It or Lose It", meta:"Martin Jonasson — GDC", url:"https://www.youtube.com/watch?v=Fy0aCDmgnxg"},
+  {col:"Videos & podcasts", tag:"FAV",      title:"GMTK: How Games Get You Hooked", meta:"Mark Brown", url:"https://www.youtube.com/watch?v=AJdEqssNZ-U"},
+  {col:"Videos & podcasts", tag:"FAV",      title:"GMTK: What Makes a Good Puzzle?", meta:"Mark Brown", url:"https://www.youtube.com/watch?v=zsjC6fa_YBg"},
+  {col:"Videos & podcasts", tag:"MUST READ", title:"Platformer Toolkit (interactivo)", meta:"GMTK — itch.io", url:"https://gmtk.itch.io/platformer-toolkit"},
+  {col:"Videos & podcasts", tag:"FREE",     title:"GDC Vault — talks gratuitas", meta:"GDC oficial", url:"https://gdcvault.com/free"},
+  {col:"Videos & podcasts", tag:"FREE",     title:"Game Developer Podcast", meta:"GameDeveloper.com", url:"https://podcasts.apple.com/us/podcast/game-developer-podcast/id1476405424"},
+  {col:"Videos & podcasts", tag:"FAV",      title:"Eggplant: The Secret Lives of Games", meta:"Podcast independiente", url:"https://eggplant.show/"},
+  {col:"Videos & podcasts", tag:"FREE",     title:"The Game Design Roundtable", meta:"Podcast desde 2012", url:"https://thegamedesignroundtable.com/"},
+
+  {col:"Libros", tag:"MUST READ", title:"The Art of Game Design", meta:"Jesse Schell", url:"https://www.schellgames.com/art-of-game-design/"},
+  {col:"Libros", tag:"MUST READ", title:"A Theory of Fun", meta:"Raph Koster", url:"https://www.theoryoffun.com/"},
+  {col:"Libros", tag:"MUST READ", title:"Rules of Play", meta:"Salen & Zimmerman", url:"https://mitpress.mit.edu/9780262240451/rules-of-play/"},
+  {col:"Libros", tag:"FAV",       title:"Game Feel", meta:"Steve Swink", url:"https://www.amazon.com/Game-Feel-Designers-Virtual-Sensation/dp/0123743281"},
+  {col:"Libros", tag:"MUST READ", title:"The Design of Everyday Things", meta:"Don Norman", url:"https://www.nngroup.com/books/design-everyday-things-revised/"},
+  {col:"Libros", tag:"FAV",       title:"An Architectural Approach to Level Design", meta:"Christopher Totten", url:"https://www.routledge.com/"},
+  {col:"Libros", tag:"FREE",      title:"Designing Virtual Worlds", meta:"Richard Bartle", url:"https://www.amazon.com/Designing-Virtual-Worlds-Richard-Bartle/dp/0131018167"},
+  {col:"Libros", tag:"FREE",      title:"Characteristics of Games", meta:"Elias / Garfield / Gutschera", url:"https://mitpress.mit.edu/"},
+
+  {col:"Workflow & proceso", tag:"FAV",       title:"GMTK: Developing (documental)", meta:"Todo el proceso de Mind Over Magnet", url:"https://www.youtube.com/playlist?list=PLc38fcMFcV_ul4D6OChdWhsNsYY3NA5B2"},
+  {col:"Workflow & proceso", tag:"MUST READ", title:"Juice it or Lose it — checklist", meta:"Game feel en práctica", url:"https://www.youtube.com/watch?v=Fy0aCDmgnxg"},
+  {col:"Workflow & proceso", tag:"FREE",      title:"How to Do Playtesting", meta:"GDC Talk", url:"https://gdcvault.com/free"},
+  {col:"Workflow & proceso", tag:"FREE",      title:"Cómo escribir un GDD", meta:"GameDeveloper.com", url:"https://www.gamedeveloper.com/design/how-to-write-a-game-design-document"},
+  {col:"Workflow & proceso", tag:"FREE",      title:"Designing with Index Cards", meta:"Prototipado en papel", url:"https://www.youtube.com/watch?v=plaW4HGUxQw"},
+  {col:"Workflow & proceso", tag:"NEW",       title:"Game Economy Design (7 caps)", meta:"Alex Karpenko", url:"https://www.gamedeveloper.com/"},
+
+  {col:"Canales & creadores", tag:"MUST READ", title:"Game Maker's Toolkit", meta:"Mark Brown — YouTube", url:"https://www.youtube.com/@GMTK"},
+  {col:"Canales & creadores", tag:"FREE",      title:"GDC — canal oficial", meta:"YouTube", url:"https://www.youtube.com/@Gdconf"},
+  {col:"Canales & creadores", tag:"FREE",      title:"Extra Credits", meta:"YouTube — 300+ episodios", url:"https://www.youtube.com/@ExtraCreditz"},
+  {col:"Canales & creadores", tag:"FAV",       title:"Raph Koster's Blog", meta:"raphkoster.com", url:"https://www.raphkoster.com/"},
+  {col:"Canales & creadores", tag:"NEW",       title:"Adam Millard — The Architect of Games", meta:"YouTube en crecimiento", url:"https://www.youtube.com/@AdamMillard"},
+  {col:"Canales & creadores", tag:"FREE",      title:"Game Developer (gamedeveloper.com)", meta:"El medio de referencia", url:"https://www.gamedeveloper.com/"},
+
+  {col:"Herramientas", tag:"FREE", title:"itch.io — jugar y estudiar", meta:"Prototipos e indie", url:"https://itch.io/"},
+  {col:"Herramientas", tag:"FREE", title:"GDC Vault — free tier", meta:"Cientos de charlas gratis", url:"https://gdcvault.com/free"},
+  {col:"Herramientas", tag:"FREE", title:"Obsidian — tu propio compendio", meta:"Notas locales offline", url:"https://obsidian.md/"},
+  {col:"Herramientas", tag:"FREE", title:"Miro / FigJam — whiteboard", meta:"Mapear sistemas y flujos", url:"https://miro.com/"},
+  {col:"Herramientas", tag:"FREE", title:"Game Design Skills", meta:"gamedesignskills.com", url:"https://gamedesignskills.com/"},
+  {col:"Herramientas", tag:"FREE", title:"Notion — para organizar recursos", meta:"Online con free tier", url:"https://notion.so"},
+];
+
+const TAG_CLASS = {"MUST READ":"tag-must","FAV":"tag-fav","FREE":"tag-free","NEW":"tag-new","PAID":"tag-paid"};
+
+function buildBoard(filter){
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  const cols = {};
+  DATA.forEach(d => {
+    if(filter !== 'all' && d.tag !== filter) return;
+    if(!cols[d.col]) cols[d.col] = [];
+    cols[d.col].push(d);
+  });
+  let total = 0;
+  Object.entries(cols).forEach(([colName, cards]) => {
+    total += cards.length;
+    const col = document.createElement('div');
+    col.className = 'col';
+    col.innerHTML = `<div class="col-head"><span class="col-title">${colName}</span><span class="col-count">${cards.length}</span></div>`;
+    cards.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `<span class="tag ${TAG_CLASS[c.tag]||'tag-free'}">${c.tag}</span><div class="card-title">${c.title}</div><div class="card-meta">${c.meta}</div><a class="card-link" href="${c.url}" target="_blank">Ver recurso</a>`;
+      col.appendChild(card);
+    });
+    board.appendChild(col);
+  });
+  if(total === 0){
+    board.innerHTML = '<div class="empty">No hay recursos con ese filtro.</div>';
+  }
+  document.getElementById('total-count').textContent = total + ' recursos';
+}
+
+document.getElementById('filters').addEventListener('click', e => {
+  const btn = e.target.closest('.fb');
+  if(!btn) return;
+  document.querySelectorAll('.fb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  buildBoard(btn.dataset.tag);
+});
+
+buildBoard('all');
+</script>
+</body>
+</html>
