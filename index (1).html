@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Design Compendium</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#111827;color:#e2e6f0;min-height:100vh;}
+
+header{padding:16px 24px;display:flex;align-items:center;gap:12px;border-bottom:0.5px solid rgba(255,255,255,0.08);}
+.logo{width:28px;height:28px;border-radius:6px;background:#534AB7;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+header h1{font-size:16px;font-weight:500;color:#fff;}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.header-count{font-size:12px;color:#6b7491;background:rgba(255,255,255,0.06);border-radius:10px;padding:3px 10px;}
+.btn-add-col{font-size:12px;padding:5px 13px;border-radius:8px;border:0.5px solid rgba(255,255,255,0.18);background:transparent;color:#c4cad8;cursor:pointer;font-family:inherit;transition:all 0.15s;}
+.btn-add-col:hover{background:rgba(255,255,255,0.08);}
+
+.filters{display:flex;gap:7px;flex-wrap:wrap;padding:12px 24px;border-bottom:0.5px solid rgba(255,255,255,0.06);}
+.fb{font-size:12px;padding:4px 13px;border-radius:14px;border:0.5px solid rgba(255,255,255,0.12);background:transparent;color:#9aa0b8;cursor:pointer;transition:all 0.15s;font-family:inherit;}
+.fb:hover{background:rgba(255,255,255,0.07);color:#d0d6e8;}
+.fb.on{background:rgba(255,255,255,0.12);color:#fff;border-color:rgba(255,255,255,0.28);}
+
+.board-wrap{overflow-x:auto;padding:16px 24px 40px;}
+.board{display:flex;gap:11px;align-items:flex-start;min-width:max-content;}
+
+.col{width:232px;background:rgba(255,255,255,0.05);border-radius:10px;padding:10px;}
+.col-head{display:flex;align-items:center;gap:6px;margin-bottom:9px;padding-bottom:8px;border-bottom:0.5px solid rgba(255,255,255,0.07);}
+.col-title-input{font-size:12px;font-weight:500;color:#c4cad8;background:transparent;border:none;outline:none;flex:1;font-family:inherit;cursor:pointer;}
+.col-title-input:focus{background:rgba(255,255,255,0.06);border-radius:4px;padding:2px 4px;cursor:text;}
+.col-count{font-size:11px;color:#6b7491;background:rgba(255,255,255,0.07);border-radius:10px;padding:1px 7px;flex-shrink:0;}
+.btn-del-col{font-size:14px;color:#3d4460;background:none;border:none;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;transition:color 0.15s;}
+.btn-del-col:hover{color:#E24B4A;}
+
+.card{background:#1e2436;border-radius:8px;margin-bottom:7px;border:0.5px solid rgba(255,255,255,0.06);overflow:hidden;transition:border-color 0.15s,background 0.15s;}
+.card:hover{background:#252b3d;border-color:rgba(255,255,255,0.14);}
+.card:last-child{margin-bottom:0;}
+.card-thumb{width:100%;height:118px;object-fit:cover;display:block;background:#161c2a;}
+.card-placeholder{width:100%;height:118px;background:#161c2a;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:500;color:#2e3654;letter-spacing:0.05em;}
+.card-body{padding:9px 11px 11px;}
+.tag{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;margin-bottom:7px;letter-spacing:0.02em;}
+.tag-must{background:#3C3489;color:#CECBF6;}
+.tag-fav{background:#633806;color:#FAC775;}
+.tag-free{background:#27500A;color:#C0DD97;}
+.tag-new{background:#085041;color:#9FE1CB;}
+.card-title{font-size:12px;font-weight:500;color:#e2e6f0;line-height:1.45;margin-bottom:3px;}
+.card-meta{font-size:11px;color:#5e6680;line-height:1.4;}
+.card-actions{display:flex;align-items:center;gap:6px;margin-top:8px;}
+.card-link{font-size:10px;color:#7aafdf;text-decoration:none;border:0.5px solid rgba(122,175,223,0.3);border-radius:4px;padding:2px 8px;transition:background 0.12s;}
+.card-link:hover{background:rgba(122,175,223,0.08);}
+.btn-edit-card{font-size:10px;color:#5e6680;background:none;border:0.5px solid rgba(255,255,255,0.08);border-radius:4px;padding:2px 8px;cursor:pointer;font-family:inherit;transition:all 0.12s;}
+.btn-edit-card:hover{color:#e2e6f0;border-color:rgba(255,255,255,0.2);}
+.btn-del-card{font-size:10px;color:#5e6680;background:none;border:0.5px solid rgba(255,255,255,0.08);border-radius:4px;padding:2px 8px;cursor:pointer;font-family:inherit;transition:all 0.12s;}
+.btn-del-card:hover{color:#E24B4A;border-color:rgba(226,75,74,0.3);}
+
+.btn-add-card{width:100%;margin-top:8px;padding:7px;font-size:12px;color:#5e6680;background:rgba(255,255,255,0.03);border:0.5px dashed rgba(255,255,255,0.1);border-radius:8px;cursor:pointer;font-family:inherit;transition:all 0.15s;text-align:center;}
+.btn-add-card:hover{color:#c4cad8;background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.2);}
+
+.empty{padding:32px 0;text-align:center;color:#3d4460;font-size:13px;width:100%;}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;}
+.modal{background:#1a2030;border-radius:12px;border:0.5px solid rgba(255,255,255,0.1);padding:24px;width:100%;max-width:420px;}
+.modal h3{font-size:15px;font-weight:500;color:#fff;margin-bottom:18px;}
+.modal label{display:block;font-size:11px;color:#6b7491;margin-bottom:5px;margin-top:14px;}
+.modal label:first-of-type{margin-top:0;}
+.modal input,.modal select,.modal textarea{width:100%;background:#111827;border:0.5px solid rgba(255,255,255,0.12);border-radius:6px;padding:8px 10px;font-size:13px;color:#e2e6f0;font-family:inherit;outline:none;transition:border-color 0.15s;}
+.modal input:focus,.modal select:focus,.modal textarea:focus{border-color:rgba(255,255,255,0.3);}
+.modal textarea{resize:vertical;min-height:60px;}
+.modal select option{background:#1a2030;}
+.modal-actions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end;}
+.btn-cancel{padding:7px 16px;font-size:12px;border-radius:6px;border:0.5px solid rgba(255,255,255,0.12);background:transparent;color:#9aa0b8;cursor:pointer;font-family:inherit;transition:all 0.15s;}
+.btn-cancel:hover{background:rgba(255,255,255,0.06);}
+.btn-save{padding:7px 16px;font-size:12px;border-radius:6px;border:none;background:#534AB7;color:#CECBF6;cursor:pointer;font-family:inherit;font-weight:500;transition:opacity 0.15s;}
+.btn-save:hover{opacity:0.85;}
+
+.modal-bg.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <rect x="1.5" y="1.5" width="4" height="11" rx="1.5" fill="#CECBF6"/>
+      <rect x="8.5" y="1.5" width="4" height="7" rx="1.5" fill="#CECBF6"/>
+    </svg>
+  </div>
+  <h1>Game Design Compendium</h1>
+  <div class="header-right">
+    <span class="header-count" id="total-count">0 recursos</span>
+    <button class="btn-add-col" id="btn-add-col">+ columna</button>
+  </div>
+</header>
+
+<div class="filters" id="filters">
+  <button class="fb on" data-tag="all">Todos</button>
+  <button class="fb" data-tag="MUST READ">Must read</button>
+  <button class="fb" data-tag="FAV">Favoritos</button>
+  <button class="fb" data-tag="FREE">Gratis</button>
+  <button class="fb" data-tag="NEW">Nuevos</button>
+</div>
+
+<div class="board-wrap"><div class="board" id="board"></div></div>
+
+<!-- Modal -->
+<div class="modal-bg hidden" id="modal-bg">
+  <div class="modal">
+    <h3 id="modal-title">Agregar recurso</h3>
+    <label>Título</label>
+    <input id="f-title" type="text" placeholder="Nombre del recurso">
+    <label>Autor / Fuente</label>
+    <input id="f-meta" type="text" placeholder="Ej: Mark Brown — YouTube">
+    <label>URL</label>
+    <input id="f-url" type="text" placeholder="https://...">
+    <label>ID de YouTube (opcional, para thumbnail automático)</label>
+    <input id="f-yt" type="text" placeholder="Ej: Fy0aCDmgnxg">
+    <label>URL de imagen alternativa (opcional)</label>
+    <input id="f-thumb" type="text" placeholder="https://... (si no es YouTube)">
+    <label>Etiqueta</label>
+    <select id="f-tag">
+      <option value="FREE">FREE</option>
+      <option value="FAV">FAV</option>
+      <option value="MUST READ">MUST READ</option>
+      <option value="NEW">NEW</option>
+    </select>
+    <label>Columna</label>
+    <select id="f-col"></select>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="btn-cancel">Cancelar</button>
+      <button class="btn-save" id="btn-save">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_DATA = [
+  {id:1,col:"Teoría — artículos",tag:"MUST READ",title:"The Door Problem",meta:"Liz England",url:"https://www.lizengland.com/blog/2014/04/the-door-problem/",yt:"6luOrhlzvrc",thumb:""},
+  {id:2,col:"Teoría — artículos",tag:"MUST READ",title:"I Have No Words & I Must Design",meta:"Greg Costikyan",url:"http://www.costik.com/nowords.html",yt:"",thumb:""},
+  {id:3,col:"Teoría — artículos",tag:"MUST READ",title:"MDA Framework",meta:"Hunicke / LeBlanc / Zubek",url:"https://users.cs.northwestern.edu/~hunicke/MDA.pdf",yt:"",thumb:""},
+  {id:4,col:"Teoría — artículos",tag:"FAV",title:"A Grammar of Gameplay",meta:"Raph Koster — GDC 2005",url:"http://www.raphkoster.com/gaming/atof/grammarofgameplay.pdf",yt:"zyVTxGpEO30",thumb:""},
+  {id:5,col:"Teoría — artículos",tag:"FREE",title:"The Chemistry of Game Design",meta:"David Perry",url:"https://www.gamedeveloper.com/design/the-chemistry-of-game-design",yt:"",thumb:""},
+  {id:6,col:"Teoría — artículos",tag:"NEW",title:"Game Developer Deep Dives 2024",meta:"GameDeveloper.com",url:"https://www.gamedeveloper.com/design/game-developer-s-2024-wrap-up-10-must-read-deep-dives",yt:"",thumb:""},
+  {id:7,col:"Teoría — artículos",tag:"FAV",title:"Good Numbers in Game Design",meta:"Alexander King — GDC 2023",url:"https://gdcvault.com/free",yt:"tWtvrPTbQ_c",thumb:""},
+
+  {id:8,col:"Videos & podcasts",tag:"MUST READ",title:"GMTK — Game Maker's Toolkit",meta:"Mark Brown — YouTube",url:"https://www.youtube.com/@GMTK",yt:"G8AT01tuyrk",thumb:""},
+  {id:9,col:"Videos & podcasts",tag:"MUST READ",title:"Juice It or Lose It",meta:"Martin Jonasson — GDC",url:"https://www.youtube.com/watch?v=Fy0aCDmgnxg",yt:"Fy0aCDmgnxg",thumb:""},
+  {id:10,col:"Videos & podcasts",tag:"FAV",title:"GMTK: How Games Get You Hooked",meta:"Mark Brown",url:"https://www.youtube.com/watch?v=AJdEqssNZ-U",yt:"AJdEqssNZ-U",thumb:""},
+  {id:11,col:"Videos & podcasts",tag:"FAV",title:"GMTK: What Makes a Good Puzzle?",meta:"Mark Brown",url:"https://www.youtube.com/watch?v=zsjC6fa_YBg",yt:"zsjC6fa_YBg",thumb:""},
+  {id:12,col:"Videos & podcasts",tag:"MUST READ",title:"Platformer Toolkit (interactivo)",meta:"GMTK — itch.io",url:"https://gmtk.itch.io/platformer-toolkit",yt:"yorTG9at90g",thumb:""},
+  {id:13,col:"Videos & podcasts",tag:"FREE",title:"GDC Vault — talks gratuitas",meta:"GDC oficial",url:"https://gdcvault.com/free",yt:"7L8vAGGitr8",thumb:""},
+  {id:14,col:"Videos & podcasts",tag:"FAV",title:"Eggplant: The Secret Lives of Games",meta:"Podcast independiente",url:"https://eggplant.show/",yt:"",thumb:""},
+  {id:15,col:"Videos & podcasts",tag:"FREE",title:"The Game Design Roundtable",meta:"Podcast desde 2012",url:"https://thegamedesignroundtable.com/",yt:"",thumb:""},
+
+  {id:16,col:"Libros",tag:"MUST READ",title:"The Art of Game Design",meta:"Jesse Schell",url:"https://www.schellgames.com/art-of-game-design/",yt:"",thumb:"https://m.media-amazon.com/images/I/81cxBNTlCeL._AC_UF350,350_QL80_.jpg"},
+  {id:17,col:"Libros",tag:"MUST READ",title:"A Theory of Fun",meta:"Raph Koster",url:"https://www.theoryoffun.com/",yt:"",thumb:"https://m.media-amazon.com/images/I/71n5J5TLURL._AC_UF350,350_QL80_.jpg"},
+  {id:18,col:"Libros",tag:"MUST READ",title:"Rules of Play",meta:"Salen & Zimmerman",url:"https://mitpress.mit.edu/9780262240451/rules-of-play/",yt:"",thumb:"https://m.media-amazon.com/images/I/71ym5PFbAHL._AC_UF350,350_QL80_.jpg"},
+  {id:19,col:"Libros",tag:"FAV",title:"Game Feel",meta:"Steve Swink",url:"https://www.amazon.com/Game-Feel-Designers-Virtual-Sensation/dp/0123743281",yt:"",thumb:"https://m.media-amazon.com/images/I/71aBXN4KPBL._AC_UF350,350_QL80_.jpg"},
+  {id:20,col:"Libros",tag:"MUST READ",title:"The Design of Everyday Things",meta:"Don Norman",url:"https://www.nngroup.com/books/design-everyday-things-revised/",yt:"",thumb:"https://m.media-amazon.com/images/I/81RuGMODEXL._AC_UF350,350_QL80_.jpg"},
+  {id:21,col:"Libros",tag:"FREE",title:"Designing Virtual Worlds",meta:"Richard Bartle",url:"https://www.amazon.com/Designing-Virtual-Worlds-Richard-Bartle/dp/0131018167",yt:"",thumb:"https://m.media-amazon.com/images/I/51XSHF1WDPL._AC_UF350,350_QL80_.jpg"},
+
+  {id:22,col:"Workflow & proceso",tag:"FAV",title:"GMTK: Developing (documental)",meta:"Proceso de Mind Over Magnet",url:"https://www.youtube.com/playlist?list=PLc38fcMFcV_ul4D6OChdWhsNsYY3NA5B2",yt:"n-8dxdHM6iA",thumb:""},
+  {id:23,col:"Workflow & proceso",tag:"FREE",title:"How to Do Playtesting",meta:"GDC Talk",url:"https://gdcvault.com/free",yt:"eELaqks9pW0",thumb:""},
+  {id:24,col:"Workflow & proceso",tag:"FREE",title:"Cómo escribir un GDD",meta:"GameDeveloper.com",url:"https://www.gamedeveloper.com/design/how-to-write-a-game-design-document",yt:"",thumb:""},
+  {id:25,col:"Workflow & proceso",tag:"FREE",title:"Designing with Index Cards",meta:"Prototipado en papel",url:"https://www.youtube.com/watch?v=plaW4HGUxQw",yt:"plaW4HGUxQw",thumb:""},
+
+  {id:26,col:"Canales & creadores",tag:"MUST READ",title:"Game Maker's Toolkit",meta:"Mark Brown — YouTube",url:"https://www.youtube.com/@GMTK",yt:"G8AT01tuyrk",thumb:""},
+  {id:27,col:"Canales & creadores",tag:"FREE",title:"GDC — canal oficial",meta:"YouTube",url:"https://www.youtube.com/@Gdconf",yt:"7L8vAGGitr8",thumb:""},
+  {id:28,col:"Canales & creadores",tag:"FREE",title:"Extra Credits",meta:"YouTube — 300+ episodios",url:"https://www.youtube.com/@ExtraCreditz",yt:"zQvWMdWhFCc",thumb:""},
+  {id:29,col:"Canales & creadores",tag:"NEW",title:"Adam Millard — The Architect of Games",meta:"YouTube en crecimiento",url:"https://www.youtube.com/@AdamMillard",yt:"SqkDVGcGSYc",thumb:""},
+
+  {id:30,col:"Herramientas",tag:"FREE",title:"itch.io — jugar y estudiar",meta:"Prototipos e indie",url:"https://itch.io/",yt:"",thumb:""},
+  {id:31,col:"Herramientas",tag:"FREE",title:"GDC Vault — free tier",meta:"Cientos de charlas gratis",url:"https://gdcvault.com/free",yt:"7L8vAGGitr8",thumb:""},
+  {id:32,col:"Herramientas",tag:"FREE",title:"Obsidian — tu propio compendio",meta:"Notas locales offline",url:"https://obsidian.md/",yt:"",thumb:""},
+  {id:33,col:"Herramientas",tag:"FREE",title:"Game Design Skills",meta:"gamedesignskills.com",url:"https://gamedesignskills.com/",yt:"",thumb:""},
+];
+
+const DEFAULT_COLS = ["Teoría — artículos","Videos & podcasts","Libros","Workflow & proceso","Canales & creadores","Herramientas"];
+
+const TAG_CLASS = {"MUST READ":"tag-must","FAV":"tag-fav","FREE":"tag-free","NEW":"tag-new"};
+
+let data, cols, nextId, activeFilter = 'all', editingId = null;
+
+function load() {
+  try {
+    const saved = localStorage.getItem('gdc_data');
+    const savedCols = localStorage.getItem('gdc_cols');
+    data = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_DATA));
+    cols = savedCols ? JSON.parse(savedCols) : [...DEFAULT_COLS];
+    nextId = data.length ? Math.max(...data.map(d=>d.id)) + 1 : 1;
+  } catch(e) {
+    data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    cols = [...DEFAULT_COLS];
+    nextId = 34;
+  }
+}
+
+function save() {
+  localStorage.setItem('gdc_data', JSON.stringify(data));
+  localStorage.setItem('gdc_cols', JSON.stringify(cols));
+}
+
+function getThumb(d) {
+  if(d.yt) return `https://i.ytimg.com/vi/${d.yt}/hqdefault.jpg`;
+  if(d.thumb) return d.thumb;
+  return null;
+}
+
+function makeThumb(d) {
+  const src = getThumb(d);
+  const initials = d.title.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  if(src) return `<img class="card-thumb" src="${src}" alt="${d.title}" onerror="this.outerHTML='<div class=card-placeholder>${initials}</div>'">`;
+  return `<div class="card-placeholder">${initials}</div>`;
+}
+
+function buildBoard(filter) {
+  activeFilter = filter;
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  let total = 0;
+
+  cols.forEach(colName => {
+    const cards = data.filter(d => d.col === colName && (filter === 'all' || d.tag === filter));
+    total += cards.length;
+
+    const col = document.createElement('div');
+    col.className = 'col';
+
+    const allInCol = data.filter(d => d.col === colName).length;
+    col.innerHTML = `
+      <div class="col-head">
+        <input class="col-title-input" value="${colName}" data-col="${colName}" title="Clic para renombrar">
+        <span class="col-count">${allInCol}</span>
+        <button class="btn-del-col" data-col="${colName}" title="Eliminar columna">×</button>
+      </div>`;
+
+    cards.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        ${makeThumb(c)}
+        <div class="card-body">
+          <span class="tag ${TAG_CLASS[c.tag]||'tag-free'}">${c.tag}</span>
+          <div class="card-title">${c.title}</div>
+          <div class="card-meta">${c.meta}</div>
+          <div class="card-actions">
+            <a class="card-link" href="${c.url}" target="_blank">Ver</a>
+            <button class="btn-edit-card" data-id="${c.id}">Editar</button>
+            <button class="btn-del-card" data-id="${c.id}">Borrar</button>
+          </div>
+        </div>`;
+      col.appendChild(card);
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'btn-add-card';
+    addBtn.dataset.col = colName;
+    addBtn.textContent = '+ agregar tarjeta';
+    col.appendChild(addBtn);
+
+    board.appendChild(col);
+  });
+
+  if(!cols.length) board.innerHTML = '<div class="empty">No hay columnas. Agregá una con el botón de arriba.</div>';
+  document.getElementById('total-count').textContent = total + ' recursos';
+}
+
+function populateColSelect(selected) {
+  const sel = document.getElementById('f-col');
+  sel.innerHTML = cols.map(c => `<option value="${c}" ${c===selected?'selected':''}>${c}</option>`).join('');
+}
+
+function openModal(cardId, defaultCol) {
+  editingId = cardId || null;
+  const modal = document.getElementById('modal-bg');
+  modal.classList.remove('hidden');
+
+  if(cardId) {
+    const c = data.find(d => d.id === cardId);
+    document.getElementById('modal-title').textContent = 'Editar recurso';
+    document.getElementById('f-title').value = c.title;
+    document.getElementById('f-meta').value = c.meta;
+    document.getElementById('f-url').value = c.url;
+    document.getElementById('f-yt').value = c.yt || '';
+    document.getElementById('f-thumb').value = c.thumb || '';
+    document.getElementById('f-tag').value = c.tag;
+    populateColSelect(c.col);
+  } else {
+    document.getElementById('modal-title').textContent = 'Agregar recurso';
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-meta').value = '';
+    document.getElementById('f-url').value = '';
+    document.getElementById('f-yt').value = '';
+    document.getElementById('f-thumb').value = '';
+    document.getElementById('f-tag').value = 'FREE';
+    populateColSelect(defaultCol || cols[0]);
+  }
+}
+
+function closeModal() {
+  document.getElementById('modal-bg').classList.add('hidden');
+  editingId = null;
+}
+
+function saveCard() {
+  const title = document.getElementById('f-title').value.trim();
+  if(!title) { alert('El título es obligatorio.'); return; }
+  const card = {
+    id: editingId || nextId++,
+    col: document.getElementById('f-col').value,
+    tag: document.getElementById('f-tag').value,
+    title,
+    meta: document.getElementById('f-meta').value.trim(),
+    url: document.getElementById('f-url').value.trim(),
+    yt: document.getElementById('f-yt').value.trim(),
+    thumb: document.getElementById('f-thumb').value.trim(),
+  };
+  if(editingId) {
+    const idx = data.findIndex(d => d.id === editingId);
+    data[idx] = card;
+  } else {
+    data.push(card);
+  }
+  save();
+  closeModal();
+  buildBoard(activeFilter);
+}
+
+document.getElementById('board').addEventListener('click', e => {
+  const addCard = e.target.closest('.btn-add-card');
+  if(addCard) { openModal(null, addCard.dataset.col); return; }
+
+  const editCard = e.target.closest('.btn-edit-card');
+  if(editCard) { openModal(parseInt(editCard.dataset.id)); return; }
+
+  const delCard = e.target.closest('.btn-del-card');
+  if(delCard) {
+    if(confirm('¿Borrar esta tarjeta?')) {
+      data = data.filter(d => d.id !== parseInt(delCard.dataset.id));
+      save(); buildBoard(activeFilter);
+    }
+    return;
+  }
+
+  const delCol = e.target.closest('.btn-del-col');
+  if(delCol) {
+    const colName = delCol.dataset.col;
+    const count = data.filter(d => d.col === colName).length;
+    const msg = count > 0 ? `Esta columna tiene ${count} tarjeta(s). ¿Borrar todo?` : '¿Eliminar esta columna?';
+    if(confirm(msg)) {
+      cols = cols.filter(c => c !== colName);
+      data = data.filter(d => d.col !== colName);
+      save(); buildBoard(activeFilter);
+    }
+    return;
+  }
+});
+
+document.getElementById('board').addEventListener('change', e => {
+  const input = e.target.closest('.col-title-input');
+  if(input) {
+    const oldName = input.dataset.col;
+    const newName = input.value.trim();
+    if(newName && newName !== oldName) {
+      cols = cols.map(c => c === oldName ? newName : c);
+      data = data.map(d => d.col === oldName ? {...d, col: newName} : d);
+      save(); buildBoard(activeFilter);
+    }
+  }
+});
+
+document.getElementById('filters').addEventListener('click', e => {
+  const btn = e.target.closest('.fb');
+  if(!btn) return;
+  document.querySelectorAll('.fb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  buildBoard(btn.dataset.tag);
+});
+
+document.getElementById('btn-add-col').addEventListener('click', () => {
+  const name = prompt('Nombre de la nueva columna:');
+  if(name && name.trim()) {
+    cols.push(name.trim());
+    save(); buildBoard(activeFilter);
+  }
+});
+
+document.getElementById('btn-save').addEventListener('click', saveCard);
+document.getElementById('btn-cancel').addEventListener('click', closeModal);
+document.getElementById('modal-bg').addEventListener('click', e => {
+  if(e.target === document.getElementById('modal-bg')) closeModal();
+});
+
+load();
+buildBoard('all');
+</script>
+</body>
+</html>
